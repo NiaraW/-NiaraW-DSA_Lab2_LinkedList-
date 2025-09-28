@@ -1,21 +1,22 @@
 #include <iostream>
 using namespace std; 
+#include<vector>
 
 
 struct User {
     string username;
     string password;
-    string role;      // Authorization role:"admin", "editor", "viewer"
+    vector<string> permissions;   // Authorization role:"admin", "editor", "viewer"
     User* next;
 
-    User(const string& u, const string& p, const string& r = "viewer") {
+    User(const string& u, const string& p, const vector<string>& r = {"view"}) {
         username = u;
         password = p;
-        role = r;
+        permissions = r;
         next = nullptr;
     }
 };
-bool insertUser(User*& head, const string& username, const string& password, const string& role = "viewer");
+bool insertUser(User*& head, const string& username, const string& password, const vector<string>& r = {"view"});
 // only put default value in function declaration not definition
 User* findUser(User* head, const string& username);
 bool authorize(User* head, const string& username, const string& action);
@@ -23,21 +24,23 @@ bool authorize(User* head, const string& username, const string& action);
 int main() {
 
 	User * head = nullptr;
-	insertUser(head, "Jas", "5478", "editor");
+	insertUser(head, "Jas", "5478", {"edit"});
 	insertUser(head, "Sally", "6767");
-	insertUser(head, "Hen", "8292", "admin");
-	bool result = findUser(head, "Sally");
+	insertUser(head, "Hen","8292", {"create", "delete"});
+	bool result = findUser(head, "Sam");
 	bool author = authorize(head, "Jas", "delete");
-	cout << boolalpha << result << endl << boolalpha << author << endl;
+	bool another = authorize(head, "Hen", "create");
+	cout << boolalpha << result << endl << boolalpha << author << endl << another << endl;
+
 
 
 	return 0;
 
 }
 
-bool insertUser(User*& head, const string& username, const string& password, const string& role) {
+bool insertUser(User*& head, const string& username, const string& password, const vector<string>& permissions) {
 	  //Insert at end: O(n)
-    User * newUser = new User(username, password, role);
+    User * newUser = new User(username, password, permissions);
     if(head == nullptr) { 
         head = newUser; 
         return true; 
@@ -79,18 +82,14 @@ bool authorize(User* head, const string& username, const string& action) {
 	if(user == nullptr) {
 		return false;
 	}
-	if(user->role == "admin") {
-		return true;
-	}
-	if(action == "view"|| action == "edit"|| action == "create" && user->role == "editor") {
-		return true;
-	} else {
+	if(user->permissions.empty()) {
 		return false;
 	}
-	if(action == "view" && user->role == "viewer") {
-		return true;
-	} else {
-		return false;
+	for(int i = 0; i < user->permissions.size(); i++ ) {
+		if(action == user->permissions[i]) {
+			return true;
+		}
 	}
 	return false;
 }
+
